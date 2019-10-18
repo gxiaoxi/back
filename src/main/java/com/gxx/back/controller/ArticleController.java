@@ -5,6 +5,7 @@ import com.gxx.back.common.BaseResponse;
 import com.gxx.back.common.StatusCode;
 import com.gxx.back.service.impl.ArticleServiceImpl;
 import com.gxx.back.utils.DateUtil;
+import com.gxx.back.utils.FileUtil;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.net.FileNameMap;
 import java.util.List;
 
 @RestController
@@ -121,5 +124,11 @@ public class ArticleController {
             e.printStackTrace();
         }
         return baseResponse;
+    }
+
+    @RequestMapping("/download")
+    public void downloadFile(HttpServletResponse response,String url) throws Exception {
+        String fileName = url.substring(url.lastIndexOf("/")+1);
+        FileUtil.downloadByNet(response,url,fileName);
     }
 }

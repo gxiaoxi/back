@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExcelUtil {
 
@@ -37,7 +39,29 @@ public class ExcelUtil {
             //给单元格设置内容
             cell.setCellValue(text);
         }
+        /*
+        //需要导出的数据集合
+        List list = new ArrayList();
+        //遍历集合，将每个集合元素对象的每个值填充到单元格中
+        for(int i=0;i<list.size();i++){
+            //从第二行开始填充数据
+            row = sheet.createRow(i+1);
+            //将数据集合转换成datas
+            List<String> datas=new ArrayList<String>();
+            datas.add(list.get(i).toString());
+            //通过datas填充excel
+            for (int j=0;j<datas.size();j++) {
+                String string=datas.get(j);
+                HSSFCell cell = row.createCell(j);
+                HSSFRichTextString richString = new HSSFRichTextString(string);
+                HSSFFont font3 = workbook.createFont();
+                //定义Excel数据颜色，这里设置为蓝色
+                //  font3.setColor(HSSFColor.BLUE.index);
+                richString.applyFont(font3);
+                cell.setCellValue(richString);
+            }
 
+        }*/
         response.setContentType("application/octet-stream;charset=UTF-8");
         response.setHeader("Content-Disposition", "attachment;filename="+new String(fileName.getBytes("gb2312"), "ISO8859-1")+".xls");
         response.addHeader("Pargam", "no-cache");
