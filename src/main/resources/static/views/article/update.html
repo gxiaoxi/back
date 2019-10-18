@@ -1,0 +1,384 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑文章</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+    <link rel="stylesheet" href="../../../layui/css/layui.css" media="all">
+    <style>
+        .layui-form-label{
+            width: 150px;
+        }
+        .layui-input-block {
+            margin-left: 180px;
+            min-height: 36px
+        }
+        .w-e-text-container{
+            height: 700px !important;/*!important是重点，因为原div是行内样式设置的高度300px*/
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid">
+
+
+    <div class="layui-row">
+        <div class="layui-col-sm2">
+
+            <div id="test9" class="demo-tree demo-tree-box" style="width: 100%; height: 100%"></div>
+        </div>
+        <div class="layui-col-sm10" >
+
+            <div class="layui-card" >
+                <div class="layui-card-header">编辑文章</div>
+                <div class="layui-card-body" style="padding: 15px;height: 100%">
+                    <form class="layui-form" action="" lay-filter="component-form-group">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">归属分类</label>
+                            <input id="sortId" type="hidden">
+                            <div class="layui-input-block">
+                                <input type="text" id="sortName" name="sortName" placeholder="请选择分类归属" class="layui-input" lay-verify="required" readonly>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">文章标题</label>
+                            <div class="layui-input-block">
+                                <input type="text" id="articleName" name="articleName" placeholder="请填入文章标题" class="layui-input" lay-verify="required" >
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">排序</label>
+                            <div class="layui-input-block">
+                                <input type="text" id="order" name="order" placeholder="请填入排序" class="layui-input" lay-verify="required" >
+                            </div>
+                        </div>
+                        <div id="editor">
+                            <p>欢迎使用 <b>wangEditor</b> 富文本编辑器</p>
+                        </div>
+
+
+                        <div class="layui-form-item layui-layout-admin">
+                            <div class="layui-input-block">
+                                <div class="layui-footer" style="left: 0;">
+                                    <button class="layui-btn" lay-submit="" lay-filter="component-form-demo1">立即提交</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script src="../../../layui/layui.js"></script>
+<script src="../../../layuiadmin/wangEditor.min.js"></script>
+
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'form', 'laydate','tree', 'util'], function(){
+        var $ = layui.$
+            ,form = layui.form
+            ,tree = layui.tree
+            ,layer = layui.layer
+            ,util = layui.util;
+        var data1
+        $.ajax({
+            url : '/back/articleSort/list',
+            data:{"id":0},
+            type:'post',
+            async:false,
+            success:function(data){
+                data1 = data;
+            }
+        })
+
+        var E = window.wangEditor;
+        var editor = new E('#editor');
+        // 或者 var editor = new E( document.getElementById('editor') )
+        editor.customConfig.uploadImgShowBase64 = true   // 使用 base64 保存图片
+        editor.customConfig.zIndex = 0
+        editor.create();
+
+
+        form.render(null, 'component-form-group');
+        var router = layui.router();
+        var id = router.search.id;
+        $.ajax({
+            url:'/back/article/getArticleById',
+            data:{"articleId":id},
+            type:'post',
+            async:false,
+            success:function(result){
+                var article = result.data;
+                editor.txt.html(article.articleContent);
+                $("#sortId").val(article.sortId);
+                $("#sortName").val(article.sortName);
+                $("#order").val(article.order);
+                $("#articleName").val(article.articleName);
+            }
+        })
+
+        function reloadTree(){
+            $.ajax({
+                url : '/back/articleSort/list',
+                data:{"id":0},
+                type:'post',
+                async:false,
+                success:function(data){
+                    data1 = data;
+                    //开启节点操作图标
+                    tree.render({
+                        elem: '#test9'
+                        ,data: data1
+                        ,id: 'sortTree' //定义索引
+                        ,edit: ['add', 'update', 'del'] //操作节点的图标
+                        ,onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+                        ,click: function(obj){
+                            var json = JSON.stringify(obj.data);
+                            var jsObject = JSON.parse(json);
+                            $("#sortName").val(jsObject.title);
+                            $("#sortId").val(jsObject.id);
+                        }
+                        ,operate: function(obj){
+                            var type = obj.type; //得到操作类型：add、edit、del
+                            var data = obj.data; //得到当前节点的数据
+                            var elem = obj.elem; //得到当前节点元素
+
+                            //Ajax 操作
+                            var id = data.id; //得到节点索引
+                            if(type === 'add'){ //增加节点
+                                var subData = {"parentId":id,"sortName":"未命名","sort":0};
+                                $.ajax({
+                                    url:'/back/articleSort/add',
+                                    data:JSON.stringify(subData),
+                                    type:'post',
+                                    contentType : "application/json;charsetset=UTF-8",//必须
+                                    async:false,
+                                    success:function(result){
+                                        if(result.code == 200){
+                                            //可以重载所有基础参数
+                                            reloadTree()
+                                        }else{
+                                            layer.open({
+                                                type: 1
+                                                ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                                ,btn: '知道了'
+                                                ,btnAlign: 'c' //按钮居中
+                                                ,shade: 0 //不显示遮罩
+                                                ,yes: function(){
+                                                    layer.closeAll();
+                                                }
+                                            });
+                                        }
+                                    }
+                                })
+                            } else if(type === 'update'){ //修改节点
+                                var sortName = elem.find('.layui-tree-txt').html();
+                                var subData = {"sortId":id,"sortName":sortName};
+                                $.ajax({
+                                    url:'/back/articleSort/update',
+                                    data:JSON.stringify(subData),
+                                    async:false,
+                                    type:'post',
+                                    contentType : "application/json;charsetset=UTF-8",//必须
+                                    success:function(result){
+                                        if(result.code == 200){
+                                            reloadTree()
+                                        }else{
+                                            layer.open({
+                                                type: 1
+                                                ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                                ,btn: '知道了'
+                                                ,btnAlign: 'c' //按钮居中
+                                                ,shade: 0 //不显示遮罩
+                                                ,yes: function(){
+                                                    layer.closeAll();
+                                                }
+                                            });
+                                        }
+                                    }
+                                })
+                            } else if(type === 'del'){ //删除节点
+                                $.ajax({
+                                    url:'/back/articleSort/delete',
+                                    data:{"sortId":id},
+                                    async:false,
+                                    success:function(result){
+                                        if(result.code == 200){
+                                            reloadTree()
+                                        }else{
+                                            layer.open({
+                                                type: 1
+                                                ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                                ,btn: '知道了'
+                                                ,btnAlign: 'c' //按钮居中
+                                                ,shade: 0 //不显示遮罩
+                                                ,yes: function(){
+                                                    layer.closeAll();
+                                                }
+                                            });
+                                        }
+                                    }
+                                })
+                            };
+                        }
+                    });
+                }
+            })
+        }
+        //开启节点操作图标
+        tree.render({
+            elem: '#test9'
+            ,data: data1
+            ,id: 'sortTree' //定义索引
+            ,edit: ['add', 'update', 'del'] //操作节点的图标
+            ,onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+            ,click: function(obj){
+                var json = JSON.stringify(obj.data);
+                var jsObject = JSON.parse(json);
+                $("#sortName").val(jsObject.title);
+                $("#sortId").val(jsObject.id);
+            }
+            ,operate: function(obj){
+                var type = obj.type; //得到操作类型：add、edit、del
+                var data = obj.data; //得到当前节点的数据
+                var elem = obj.elem; //得到当前节点元素
+
+                //Ajax 操作
+                var id = data.id; //得到节点索引
+                if(type === 'add'){ //增加节点
+                    var subData = {"parentId":id,"sortName":"未命名","sort":0};
+                    $.ajax({
+                        url:'/back/articleSort/add',
+                        data:JSON.stringify(subData),
+                        type:'post',
+                        contentType : "application/json;charsetset=UTF-8",//必须
+                        async:false,
+                        success:function(result){
+                            if(result.code == 200){
+                                //可以重载所有基础参数
+                                reloadTree()
+                            }else{
+                                layer.open({
+                                    type: 1
+                                    ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                    ,btn: '知道了'
+                                    ,btnAlign: 'c' //按钮居中
+                                    ,shade: 0 //不显示遮罩
+                                    ,yes: function(){
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                } else if(type === 'update'){ //修改节点
+                    var sortName = elem.find('.layui-tree-txt').html();
+                    var subData = {"sortId":id,"sortName":sortName};
+                    $.ajax({
+                        url:'/back/articleSort/update',
+                        data:JSON.stringify(subData),
+                        async:false,
+                        type:'post',
+                        contentType : "application/json;charsetset=UTF-8",//必须
+                        success:function(result){
+                            if(result.code == 200){
+                                reloadTree()
+                            }else{
+                                layer.open({
+                                    type: 1
+                                    ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                    ,btn: '知道了'
+                                    ,btnAlign: 'c' //按钮居中
+                                    ,shade: 0 //不显示遮罩
+                                    ,yes: function(){
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                } else if(type === 'del'){ //删除节点
+                    $.ajax({
+                        url:'/back/articleSort/delete',
+                        data:{"sortId":id},
+                        async:false,
+                        success:function(result){
+                            if(result.code == 200){
+                                reloadTree()
+                            }else{
+                                layer.open({
+                                    type: 1
+                                    ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                    ,btn: '知道了'
+                                    ,btnAlign: 'c' //按钮居中
+                                    ,shade: 0 //不显示遮罩
+                                    ,yes: function(){
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                };
+            }
+        });
+        /* 监听提交 */
+        form.on('submit(component-form-demo1)', function(data){
+            var articleContent = editor.txt.html();
+            var sortId = $("#sortId").val();
+            var sortName = $("#sortName").val();
+            var order = $("#order").val();
+            var articleName = $("#articleName").val();
+            var subData = {"sortName":sortName,"sortId":sortId,"articleContent":articleContent,"order":order,"articleName":articleName,"articleId":id};
+            $.ajax({
+                url:'/back/article/update',
+                data:JSON.stringify(subData),
+                dataType:'json',
+                type:'post',
+                contentType : "application/json;charsetset=UTF-8",//必须
+                async:false,
+                success:function(result){
+                    if(result.code == 200){
+                        closeThis();
+                    }else{
+                        layer.open({
+                            type: 1
+                            ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                            ,btn: '知道了'
+                            ,btnAlign: 'c' //按钮居中
+                            ,shade: 0 //不显示遮罩
+                            ,yes: function(){
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+
+    });
+    function closeThis(){
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);//关闭当前页
+        window.parent.location.replace("/back/views/article/list.html")//刷新父级页面
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gxx.back.dao.ArticleSortDao">
+  <resultMap id="BaseResultMap" type="com.gxx.back.bean.ArticleSort">
+    <result column="sort_id" jdbcType="INTEGER" property="sortId" />
+    <result column="sort_name" jdbcType="VARCHAR" property="sortName" />
+      <result column="parent_id" jdbcType="INTEGER" property="parentId" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="sort" jdbcType="INTEGER" property="sort" />
+  </resultMap>
+  <select id="getArticleSortList" resultMap="BaseResultMap">
+    select sort_id,sort_name,parent_id,create_time,sort
+    from article_sort order by sort
+  </select>
+  <insert id="addArticleSort" parameterType="com.gxx.back.bean.ArticleSort">
+    insert into article_sort (sort_name,parent_id,create_time,sort)
+    values (#{sortName},#{parentId},#{createTime},#{sort})
+  </insert>
+  <delete id="deleteArticleSort" parameterType="java.lang.Integer">
+    delete from article_sort where sort_id = #{sortId}
+  </delete>
+  <update id="updateArticleSort" parameterType="com.gxx.back.bean.ArticleSort">
+    update article_sort set sort_name = #{sortName} where sort_id = #{sortId}
+  </update>
+  <select id="getViewsList" resultType="com.gxx.back.bean.ArticleView">
+    select concat('sort-',sort_id) id,sort_name name ,concat('sort-',parent_id) parentId
+    from article_sort
+    union all
+    select concat('article-',article_id) id,article_name name,concat('sort-',sort_id) parentId from article
+  </select>
+  <select id="getFirstArticleSortList" resultMap="BaseResultMap">
+    select sort_id,sort_name,parent_id,create_time,sort
+    from article_sort where parent_id = 1 order by sort
+  </select>
+</mapper>

@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑菜单</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+    <style>
+        .layui-form-label{
+            width: 150px;
+        }
+        .layui-input-block {
+            margin-left: 180px;
+            min-height: 36px
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">编辑菜单</div>
+        <div class="layui-card-body" style="padding: 15px;">
+            <form class="layui-form" action="" lay-filter="component-form-group">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">菜单名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="menuName" name="menuName" autocomplete="off" placeholder="请输入菜单名称" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+                <div class="layui-form-item" style="width: 500px!important;">
+                    <label class="layui-form-label">是否一级菜单</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="isFirstMenu" id="isFirstMenu" lay-skin="switch" lay-text="是|否" lay-filter="isFirstMenu">
+                    </div>
+                </div>
+                <div class="layui-form-item" style="display: none" id="classDiv">
+                    <label class="layui-form-label">图标样式</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="menuPicClass" name="menuPicClass" autocomplete="off" placeholder="请输入图标样式" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item" id="urlDiv">
+                    <label class="layui-form-label">菜单地址</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="menuUrl" name="menuUrl" autocomplete="off" placeholder="请输入菜单地址" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+                <div class="layui-form-item" id="parentSelect">
+                    <label class="layui-form-label">上级菜单</label>
+                    <div class="layui-input-block">
+                        <select name="parentId" id="menuSelect">
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item" >
+                    <label class="layui-form-label">排序</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="sort" name="sort" autocomplete="off" placeholder="请输入排序" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+
+                <div class="layui-form-item layui-layout-admin">
+                    <div class="layui-input-block">
+                        <div class="layui-footer" style="left: 0;">
+                            <button class="layui-btn" lay-submit="" lay-filter="component-form-demo1">立即提交</button>
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'form', 'laydate'], function(){
+        var $ = layui.$
+            ,form = layui.form;
+
+
+        $.ajax({
+            url:'/back/menu/list',
+            async:false,
+            success:function(result){
+                var menuList = result.data;
+                var selectHtml = "";
+                $("#menuSelect").empty();
+                for(var i=0;i<menuList.length;i++){
+                    if(menuList[i].parentId == 0){
+                        selectHtml+='<option value="'+menuList[i].menuId+'">'+menuList[i].menuName+'</option>';
+                    }
+                }
+                $("#menuSelect").append(selectHtml);
+            }
+        })
+
+        var router = layui.router();
+        var id = router.search.id;
+
+        $.ajax({
+            url:'/back/menu/getMenuById',
+            data:{"menuId":id},
+            async:false,
+            type:'post',
+            success:function (result) {
+                if(result.code == 200){
+                    var menu = result.data;
+                    $("#menuName").val(menu.menuName);
+                    $("#menuPicClass").val(menu.menuPicClass);
+                    $("#menuUrl").val(menu.menuUrl);
+                    $("#sort").val(menu.sort);
+                    $("#menuSelect").val(menu.parentId);
+                    if(menu.parentId == 0){
+                        $("#isFirstMenu").attr("checked",true);
+                        $("#classDiv").show();
+                        $("#parentSelect").hide();
+                    }else{
+                        $("#isFirstMenu").attr("checked",false);
+                        $("#classDiv").hide();
+                        $("#parentSelect").show();
+                    }
+                }else{
+                    layer.open({
+                        type: 1
+                        ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                        ,btn: '知道了'
+                        ,btnAlign: 'c' //按钮居中
+                        ,shade: 0 //不显示遮罩
+                        ,yes: function(){
+                            layer.closeAll();
+                        }
+                    });
+                }
+            }
+        })
+        form.render(null, 'component-form-group');
+
+
+        /* 监听提交 */
+        form.on('submit(component-form-demo1)', function(data){
+            var menuName = $("#menuName").val();
+            var menuPicClass = $("#menuPicClass").val();
+            var menuUrl = $("#menuUrl").val();
+            var sort = $("#sort").val();
+            var isFirstMenu = $("#isFirstMenu").is(':checked');
+            var parentId = $("#menuSelect").val();
+            var subFlag = true;
+            if(isFirstMenu){
+                parentId = 0;
+                if(menuPicClass.trim() == ""){
+                   alert("请输入菜单图标样式");
+                    subFlag = false;
+                }
+            }else{
+                menuPicClass = "";
+            }
+            if(subFlag){
+                var subData = {"menuName":menuName,"menuUrl":menuUrl,"menuPicClass":menuPicClass,"sort":sort,"parentId":parentId,"menuId":id};
+                $.ajax({
+                    url:'/back/menu/update',
+                    data:JSON.stringify(subData),
+                    dataType:'json',
+                    type:'post',
+                    contentType : "application/json;charsetset=UTF-8",//必须
+                    async:false,
+                    success:function(result){
+                        if(result.code == 200){
+                           closeThis();
+                        }else{
+                            layer.open({
+                                type: 1
+                                ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                ,btn: '知道了'
+                                ,btnAlign: 'c' //按钮居中
+                                ,shade: 0 //不显示遮罩
+                                ,yes: function(){
+                                    layer.closeAll();
+                                }
+                            });
+                        }
+                    }
+                })
+            }
+            return false;
+        });
+        form.on('switch(isFirstMenu)', function(data){
+            $("#classDiv").toggle();
+            $("#parentSelect").toggle();
+        });
+
+    });
+    function closeThis(){
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);//关闭当前页
+        window.parent.location.replace("/back/views/menu/list.html")//刷新父级页面
+    }
+</script>
+</body>
+</html>

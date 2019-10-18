@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gxx.back.dao.ArticleDao">
+  <resultMap id="BaseResultMap" type="com.gxx.back.bean.Article">
+    <result column="article_id" jdbcType="INTEGER" property="articleId" />
+    <result column="article_name" jdbcType="VARCHAR" property="articleName" />
+      <result column="article_content" jdbcType="VARCHAR" property="articleContent" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="sort_id" jdbcType="INTEGER" property="sortId" />
+    <result column="sort_name" jdbcType="VARCHAR" property="sortName" />
+    <result column="order" jdbcType="INTEGER" property="order" />
+    <result column="read_num" jdbcType="INTEGER" property="readNum" />
+  </resultMap>
+  <insert id="addArticle" parameterType="com.gxx.back.bean.Article">
+    insert into article (article_name,article_content,create_time,sort_id,`order`)
+    values(#{articleName},#{articleContent},#{createTime},#{sortId},#{order})
+  </insert>
+  <select id="getArticleById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select a.article_id,a.article_name,a.article_content,a.create_time,a.sort_id,a.`order`,s.sort_name,a.read_num
+    from article a
+    left join article_sort s on a.sort_id = s.sort_id
+    where  a.article_id = #{articleId}
+  </select>
+  <select id="getArticleList" resultMap="BaseResultMap">
+    select a.article_id,a.article_name,a.article_content,a.create_time,a.sort_id,a.`order`,s.sort_name,a.read_num
+    from article a
+    left join article_sort s on a.sort_id = s.sort_id
+    order by a.`order` desc
+  </select>
+  <delete id="deleteArticle" parameterType="java.lang.Integer">
+    delete from article where article_id = #{articleId}
+  </delete>
+  <update id="updateArticle" parameterType="com.gxx.back.bean.Article">
+    update article set article_name = #{articleName},sort_id = #{sortId},article_content = #{articleContent},`order` = #{order}
+    where article_id = #{articleId}
+  </update>
+  <update id="addRead" parameterType="java.lang.Integer">
+    update article set read_num = read_num+1 where article_id = #{articleId}
+  </update>
+</mapper>

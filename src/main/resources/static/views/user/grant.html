@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>角色分配</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../../layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend>角色分配</legend>
+</fieldset>
+<div id="grantRole" class="demo-transfer" style="text-align: center"></div>
+<div class="layui-form-item layui-layout-admin">
+    <div class="layui-input-block">
+        <div class="layui-footer" style="left: 0;">
+            <button class="layui-btn" id="subbtn">立即提交</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../../layui/layui.js"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    layui.use(['transfer', 'layer', 'util'], function(){
+        var $ = layui.$
+            ,transfer = layui.transfer
+            ,layer = layui.layer
+            ,util = layui.util;
+        var router = layui.router();
+        var id = router.search.id;
+
+        $.ajax({
+            url:'/back/role/getUserRoleList',
+            data:{"userId":id},
+            async:false,
+            type:'post',
+            success:function (result) {
+                if(result.code == 200){
+                    var all = result.data.all;
+                    var exit = result.data.exit;
+                    transfer.render({
+                        elem: '#grantRole'
+                        ,id:'grantRole'
+                        ,data: all
+                        ,title: ['未分配角色', '已分配角色']
+                        ,showSearch: true
+                        ,value: exit
+                        ,height:600,width:250
+                    })
+
+                }
+            }
+        })
+
+
+        $("#subbtn").click(function(){
+            var checkedData = transfer.getData('grantRole'); //获取右侧数据
+            $.ajax({
+                url:"/back/user/grant",
+                data:{"userId":id,"grantJson":JSON.stringify(checkedData)},
+                async:false,
+                type:'post',
+                success:function (result) {
+                    if(result.code == 200){
+                        closeThis();
+                    }else{
+                        layer.open({
+                            type: 1
+                            ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                            ,btn: '知道了'
+                            ,btnAlign: 'c' //按钮居中
+                            ,shade: 0 //不显示遮罩
+                            ,yes: function(){
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                }
+            })
+        })
+
+
+    });
+    function closeThis(){
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);//关闭当前页
+        window.parent.location.replace("/back/views/user/list.html")//刷新父级页面
+    }
+</script>
+
+</body>
+</html>

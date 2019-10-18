@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>品牌管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../layuiadmin/style/admin.css" media="all">
+    <!--layui.table图片显示不全，需重新定义CSS  -->
+    <style type="text/css">
+        .layui-table-cell{
+            height:auto!important;
+            white-space:normal;
+        }
+
+    </style>
+</head>
+<body>
+
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header"></div>
+                <div class="layui-card-body">
+                    <table class="layui-hide" id="test-table-toolbar" lay-filter="test-table-toolbar"></table>
+
+                    <script type="text/html" id="test-table-toolbar-toolbarDemo">
+                        <div class="layui-btn-container">
+                            <button class="layui-btn layui-btn-sm" lay-event="addBrand">新增</button>
+                            <button class="layui-btn layui-btn-sm" id="upload_excel">批量导入</button>
+                            <button class="layui-btn layui-btn-sm" lay-event="tempExport">下载模板</button>
+                        </div>
+                    </script>
+                    <script type="text/html" id="test-table-toolbar-barDemo">
+                        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                    </script>
+                    <script type="text/html" id="imgtmp">
+                        <img src="{{d.logoUrl}}" style="width: 150px;height: 100px" />
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'table','upload'], function(){
+        var admin = layui.admin
+            ,table = layui.table
+            ,form = layui.form
+            ,$ = layui.$
+            ,upload = layui.upload;
+        var brandTable =table.render({
+            elem: '#test-table-toolbar'
+            ,url: '/back/brand/list'
+            ,height: 'full-100'
+            ,toolbar: '#test-table-toolbar-toolbarDemo'
+            ,title: '分类列表'
+            ,cols: [[
+               // {type: 'checkbox', fixed: 'left'},
+                {field:'brandId', title:'ID', sort: true,align:'center'}
+                ,{field:'brandName', title:'品牌名称',align:'center'}
+                ,{field:'sortName', title:'所属分类',align:'center'}
+                ,{field:'logoUrl', title: 'logo', templet:'#imgtmp',width:200,align:'center'}
+                ,{field:'creatorName', title:'创建人',align:'center'}
+                ,{field:'createTime', title:'创建时间',align:'center'}
+                ,{fixed: 'right', toolbar: '#test-table-toolbar-barDemo', width:200,align:'center'}
+            ]]
+            ,page: true
+            ,limits:[10,30,50,100]
+            ,loading:true
+        });
+
+        //头工具栏事件
+        table.on('toolbar(test-table-toolbar)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'addBrand':
+                    var index = layer.open({
+                        type: 2,
+                        content: 'add.html',
+                        area: ['600px', '600px'],
+                        maxmin: true
+                    });
+                    layer.full(index);
+                    break;
+                case 'tempExport':
+                    window.location.href = "/back/brand/exportTemp";
+                    break;
+            };
+        });
+
+        upload.render({
+            elem: '#upload_excel',
+            url: "/back/brand/import",
+            size: '3072',
+            accept: "file",
+            exts: 'xls|xlsx|xlsm|xlt|xltx|xltm',
+            done: function (result) {
+                if(result.code == 200){
+                    layer.msg('导入成功');
+                    brandTable.reload();
+                }else{
+                    layer.msg('导入失败');
+                    var map = result.data;
+                    var htmlStr = "";
+                    for(var key in map){
+                        htmlStr+='<p>第'+key+'行：'+map[key]+'</p><br>'
+                    }
+                    layer.open({
+                        type: 1
+                        ,content: '<div style="padding: 20px 50px;">'+ htmlStr +'</div>'
+                        ,btn: '知道了'
+                        ,btnAlign: 'c' //按钮居中
+                        ,shade: 0 //不显示遮罩
+                        ,yes: function(){
+                            layer.closeAll();
+                        }
+                    });
+                }
+            }
+        });
+        //监听行工具事件
+        table.on('tool(test-table-toolbar)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    $.ajax({
+                        url:'/back/brand/delete',
+                        data:{"brandId":data.brandId},
+                        async:false,
+                        type:'post',
+                        success:function(result){
+                            layer.close(index);
+                            if (result.code == 200){
+                                //执行重载
+                                brandTable.reload();
+                            }else{
+                                layer.open({
+                                    type: 1
+                                    ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                                    ,btn: '知道了'
+                                    ,btnAlign: 'c' //按钮居中
+                                    ,shade: 0 //不显示遮罩
+                                    ,yes: function(){
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                });
+            } else if(obj.event === 'edit'){
+
+                var index = layer.open({
+                    type: 2,
+                    content: 'update.html/#/id='+data.brandId,
+                    area: ['600px', '600px'],
+                    maxmin: true
+                });
+               layer.full(index);
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

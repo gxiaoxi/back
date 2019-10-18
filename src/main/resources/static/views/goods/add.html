@@ -1,0 +1,157 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>新增商品</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../layuiadmin/style/admin.css" media="all">
+    <style>
+        .layui-form-label{
+            width: 150px;
+        }
+        .layui-input-block {
+            margin-left: 180px;
+            min-height: 36px
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">新增商品</div>
+        <div class="layui-card-body" style="padding: 15px;">
+            <form class="layui-form" action="" lay-filter="component-form-group">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">商品名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="goodsName" name="goodsName" autocomplete="off" placeholder="请输入商品名称" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">选择分类</label>
+                    <div class="layui-input-block">
+                        <select name="sort" lay-verify="required" lay-search lay-filter="sort" id="sortSelect">
+
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">选择品牌</label>
+                    <div class="layui-input-block">
+                        <select name="brand" lay-verify="required" lay-search lay-filter="brand" id="brandSelect">
+                            <option value="">输入要搜索的品牌</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item layui-layout-admin">
+                    <div class="layui-input-block">
+                        <div class="layui-footer" style="left: 0;">
+                            <button class="layui-btn" lay-submit="" lay-filter="component-form-demo1">立即提交</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script src="../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'form', 'laydate'], function(){
+        var $ = layui.$
+            ,form = layui.form;
+
+        $.ajax({
+            url:'/back/sort/getSortListByState',
+            async:false,
+            success:function(result){
+                var sortList = result.data;
+                var htmlStr = '<option value="">输入要搜索的分类</option>';
+                $("#sortSelect").empty();
+                for(var i=0;i<sortList.length;i++){
+                    htmlStr += '<option value="'+sortList[i].sortId+'">'+sortList[i].sortName+'</option>';
+                }
+                $("#sortSelect").append(htmlStr);
+            }
+        })
+        form.on('select(sort)', function(data){
+            $.ajax({
+                url:'/back/brand/getBrandListBySort',
+                data:{"sortId":data.value},
+                async:false,
+                type:'post',
+                success:function(result){
+                    var brandList = result.data;
+                    var htmlStr = '<option value="">输入要搜索的品牌</option>';
+                    $("#brandSelect").empty();
+                    for(var i=0;i<brandList.length;i++){
+                        htmlStr += '<option value="'+brandList[i].brandId+'">'+brandList[i].brandName+'</option>';
+                    }
+                    $("#brandSelect").append(htmlStr);
+                    form.render('select');//重新渲染
+                }
+            })
+        })
+
+        form.render(null, 'component-form-group');
+
+
+        /* 监听提交 */
+        form.on('submit(component-form-demo1)', function(data){
+            var goodsName = $("#goodsName").val();
+            var sortId = $("#sortSelect").val();
+            var brandId = $("#brandSelect").val();
+
+            var subData = {"goodsName":goodsName,"sortId":sortId,"brandId":brandId};
+            $.ajax({
+                url:'/back/goods/add',
+                data:JSON.stringify(subData),
+                dataType:'json',
+                type:'post',
+                contentType : "application/json;charsetset=UTF-8",//必须
+                async:false,
+                success:function(result){
+                    if(result.code == 200){
+                       closeThis();
+                    }else{
+                        layer.open({
+                            type: 1
+                            ,content: '<div style="padding: 20px 100px;">'+ result.msg +'</div>'
+                            ,btn: '知道了'
+                            ,btnAlign: 'c' //按钮居中
+                            ,shade: 0 //不显示遮罩
+                            ,yes: function(){
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+        form.on('switch(isFirstMenu)', function(data){
+            $("#classDiv").toggle();
+            $("#parentSelect").toggle();
+        });
+
+    });
+    function closeThis(){
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);//关闭当前页
+        window.parent.location.replace("list.html")//刷新父级页面
+    }
+</script>
+</body>
+</html>

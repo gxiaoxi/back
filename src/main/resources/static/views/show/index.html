@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>layui</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="../../layui/css/layui.css"  media="all">
+  <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+  <style>
+    .layui-nav .layui-this:after, .layui-nav-bar, .layui-nav-tree .layui-nav-itemed:after{
+      background-color:#ffffff!important;
+    }
+  </style>
+  <meta name="baidu-site-verification" content="IqL2Iq4nBJ" />
+</head>
+<body class="layui-layout-body">
+<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+<!--[if lt IE 9]>
+<script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+<script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<div class="layui-layout layui-layout-admin">
+  <div class="layui-header " style="background-color: #0593d3!important;">
+    <div class="layui-logo" style="color: white">知识库</div>
+    <!-- 头部区域（可配合layui已有的水平导航） -->
+    <ul class="layui-nav layui-layout-left" id="firstList"><!--
+      <li class="layui-nav-item layui-this" data-id="2"><a href="javascript:void(0)">JAVA</a></li>
+      <li class="layui-nav-item" data-id="3"><a href="javascript:void(0)">PYTHON</a></li>-->
+      <!--<li class="layui-nav-item">
+        <a href="javascript:;">其它系统</a>
+        <dl class="layui-nav-child">
+          <dd><a href="">邮件管理</a></dd>
+          <dd><a href="">消息管理</a></dd>
+          <dd><a href="">授权管理</a></dd>
+        </dl>
+      </li>-->
+    </ul>
+  </div>
+  <div class="layui-side layui-bg-gray" style="width: 400px!important;">
+    <div class="layui-side-scroll" style="padding-left: 20px;width: 350px!important;">
+      <div id="test13" class="demo-tree-more"></div>
+    </div>
+  </div>
+
+  <div class="layui-body" style="padding-left: 200px!important">
+    <!-- 内容主体区域 -->
+    <div style="padding: 15px;">
+
+            <div class="layui-col-sm12" id="content">
+
+            </div>
+  </div>
+<!--
+  <div class="layui-footer">
+    &lt;!&ndash; 底部固定区域 &ndash;&gt;
+    © layui.com - 底部固定区域
+  </div>-->
+</div>
+
+<script src="../../layui/layui.js" charset="utf-8"></script>
+<script>
+  layui.use(['element','carousel', 'form','tree', 'util'], function(){
+      var element = layui.element
+            ,carousel = layui.carousel
+            ,form = layui.form,tree = layui.tree
+              ,$=layui.$; //导航的hover效果、二级菜单等功能，需要依赖element模块
+    $.ajax({
+      url:'/back/articleSort/getFirstList',
+      async:false,
+      success:function(result){
+        $("#firstList").empty();
+        var list = result.data;
+        var htmlstr = "";
+        for(var i=0;i<list.length;i++){
+          if(i == 0){
+            htmlstr +='<li class="layui-nav-item layui-this" data-id="'+list[i].sortId+'"><a href="javascript:void(0)">'+list[i].sortName+'</a></li>';
+          }else{
+            htmlstr +='<li class="layui-nav-item" data-id="'+list[i].sortId+'"><a href="javascript:void(0)">'+list[i].sortName+'</a></li>';
+          }
+        }
+        $("#firstList").append(htmlstr);
+        element.init();
+      }
+    })
+
+    $(".layui-nav-item").each(function(){
+      if($(this).hasClass("layui-this")){
+        var id =$(this).data("id");
+        load(id);
+        $("#content").html("");
+      }
+    })
+
+
+    $(".layui-nav-item").click(function(){
+      var id = $(this).data("id");
+      load(id);
+      $("#content").html("");
+    })
+
+
+    function load(id){
+      $.ajax({
+        url: '/back/articleSort/listviews',
+        data:{"id":'sort-'+id},
+        type:'post',
+        async: false,
+        success: function (data) {
+          //无连接线风格
+          tree.render({
+            elem: '#test13'
+            ,data: data
+            ,showLine: true  //是否开启连接线
+            ,onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+            ,click: function(obj){
+              var json = JSON.stringify(obj.data);
+              var jsObject = JSON.parse(json);
+              var articleIdStr = jsObject.id;
+              var articleId = articleIdStr.split("-")[1];
+              $.ajax({
+                url:'/back/article/addRead',
+                data:{"articleId":articleId}
+              })
+              $.ajax({
+                url:'/back/article/getArticleById',
+                data:{"articleId":articleId},
+                async:false,
+                success:function (result) {
+                  var htmlStr = '<blockquote class="layui-elem-quote layui-text" style="border-left:5px solid #0593d3!important">'+result.data.articleName+'&nbsp;&nbsp;阅读:'+result.data.readNum+'</blockquote>';
+                  $("#content").html(htmlStr+result.data.articleContent);
+                }
+              })
+
+            }
+          });
+        }
+      })
+    }
+  });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gxx.back.dao.SortDao">
+  <resultMap id="BaseResultMap" type="com.gxx.back.bean.Sort">
+    <result column="sort_id" jdbcType="INTEGER" property="sortId" />
+    <result column="sort_name" jdbcType="VARCHAR" property="sortName" />
+      <result column="state" jdbcType="INTEGER" property="state" />
+      <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+      <result column="creator" jdbcType="INTEGER" property="creator" />
+      <result column="user_realname" jdbcType="VARCHAR" property="creatorName" />
+  </resultMap>
+    <select id="getSortList" resultMap="BaseResultMap">
+        select  s.sort_id,s.sort_name,s.state,s.create_time,u.user_realname from sort s
+        left join user u on s.creator = u.user_id
+    </select>
+  <delete id="deleteSort" parameterType="java.lang.Integer">
+    delete from sort where sort_id = #{sortId}
+  </delete>
+  <insert id="addSort" parameterType="com.gxx.back.bean.Sort">
+    insert into sort (sort_name,state,create_time,creator)
+    values(#{sortName},#{state},#{createTime},#{creator})
+  </insert>
+  <update id="updateSort" parameterType="com.gxx.back.bean.Sort">
+    update sort set sort_name = #{sortName}
+    where sort_id = #{sortId}
+  </update>
+  <update id="updateSortState">
+    update sort set state = #{state} where sort_id = #{sortId}
+  </update>
+  <select id="hasBrand" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(*) from brand where sort_id = #{sortId}
+  </select>
+  <select id="getSortListByState" resultMap="BaseResultMap">
+    select sort_id,sort_name from sort where state = 0
+  </select>
+  <select id="sortExit" parameterType="java.lang.String" resultType="java.lang.Integer">
+    select count(*) from sort where sort_name = #{sortName}
+  </select>
+  <select id="sortExitWithoutIt" resultType="java.lang.Integer">
+    select count(*) from sort where sort_name = #{sortName} and sort_id != #{sortId}
+  </select>
+  <select id="getSortByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select sort_id,sort_name,state from sort where sort_name = #{sortName}
+  </select>
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gxx.back.dao.BrandDao">
+  <resultMap id="BaseResultMap" type="com.gxx.back.bean.Brand">
+    <result column="brand_id" jdbcType="INTEGER" property="brandId" />
+    <result column="brand_name" jdbcType="VARCHAR" property="brandName" />
+    <result column="sort_id" jdbcType="INTEGER" property="sortId" />
+    <result column="sort_name" jdbcType="VARCHAR" property="sortName" />
+    <result column="logo_url" jdbcType="VARCHAR" property="logoUrl" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="creator" jdbcType="INTEGER" property="creator" />
+    <result column="user_realname" jdbcType="INTEGER" property="creatorName" />
+  </resultMap>
+  <select id="getBrandList" resultMap="BaseResultMap">
+    select b.brand_id,b.brand_name,b.sort_id,s.sort_name,b.logo_url,b.create_time
+        ,u.user_realname
+    from brand b
+    left join sort s on b.sort_id = s.sort_id
+    left join user u on b.creator = u.user_id
+  </select>
+  <insert id="addBrand" parameterType="com.gxx.back.bean.Brand">
+    insert into brand (brand_name,sort_id,logo_url,create_time,creator)
+    values(#{brandName},#{sortId},#{logoUrl},#{createTime},#{creator})
+  </insert>
+  <delete id="deleteBrand" parameterType="java.lang.Integer">
+    delete from brand where brand_id = #{brandId}
+  </delete>
+  <select id="hasGoods" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(*) from goods where brand_id = #{brandId}
+  </select>
+  <select id="getBrandById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select brand_id,brand_name,sort_id,logo_url from brand where brand_id = #{brandId}
+  </select>
+  <update id="updateBrand" parameterType="com.gxx.back.bean.Brand">
+    update brand set brand_name = #{brandName},sort_id = #{sortId},logo_url = #{logoUrl}
+    where brand_id = #{brandId}
+  </update>
+  <select id="brandNameExit" resultType="java.lang.Integer">
+    select count(*) from brand where sort_id = #{sortId} and brand_name = #{brandName}
+  </select>
+  <select id="getBrandListBySort" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select brand_id,brand_name from brand where sort_id = #{sortId}
+  </select>
+  <select id="brandNameUpdateExit" resultType="java.lang.Integer">
+    select count(*) from brand where sort_id = #{sortId} and brand_name = #{brandName} and brand_id != #{brandId}
+  </select>
+  <select id="getBrandByNameAndSortId" resultMap="BaseResultMap">
+    select brand_id from brand where brand_name = #{brandName} and sort_id = #{sortId}
+  </select>
+</mapper>

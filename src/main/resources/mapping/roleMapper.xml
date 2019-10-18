@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gxx.back.dao.RoleDao">
+  <resultMap id="BaseResultMap" type="com.gxx.back.bean.Role">
+    <result column="role_id" jdbcType="INTEGER" property="roleId" />
+    <result column="role_name" jdbcType="VARCHAR" property="roleName" />
+    <result column="sort" jdbcType="INTEGER" property="sort" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="update_time" jdbcType="VARCHAR" property="updateTime" />
+  </resultMap>
+
+  <select id="getRoleList" resultMap="BaseResultMap">
+    select role_id,role_name,sort,create_time,update_time from role
+  </select>
+  <insert id="addRole" parameterType="com.gxx.back.bean.Role">
+    insert into role(role_name,sort,create_time) values(#{roleName},#{sort},#{createTime})
+  </insert>
+  <update id="updateRole" parameterType="com.gxx.back.bean.Role">
+    update role set role_name = #{roleName},sort = #{sort},update_time = #{updateTime}
+    where role_id = #{roleId}
+  </update>
+  <select id="getRoleById" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select role_id,role_name,sort from role where role_id = #{roleId}
+  </select>
+  <delete id="deleteRole" parameterType="java.lang.Integer">
+    delete from role where role_id = #{roleId}
+  </delete>
+  <delete id="deleteRoleMenu" parameterType="java.lang.Integer">
+    delete from role_menu where role_id = #{roleId}
+  </delete>
+  <select id="roleHasUser" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(*) from user_role where role_id = #{roleId}
+  </select>
+  <select id="getUserRoleList" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select role_id , role_name from role where role_id in (
+     select role_id from user_role where user_id = #{userId}
+    )
+
+  </select>
+</mapper>
